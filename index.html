@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shopping site</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+
+
+  <style>
+    /* CSS custom properties for dynamic theme switching - cannot be replaced by Tailwind */
+    :root {
+      --bg: #faf9f6; --surface: #ffffff; --text: #1a1a1a;
+      --text-muted: #6b6b6b; --border: #e8e4df; --accent: #c9472b;
+      --accent-hover: #a83622; --nav-bg: #1a1a1a; --card-bg: #ffffff;
+      --shadow: rgba(0,0,0,0.08); --tag-bg: #f0ece6;
+    }
+    .dark-mode {
+      --bg: #0f0f0f; --surface: #1c1c1c; --text: #f0ece6;
+      --text-muted: #9a9a9a; --border: #2e2e2e; --accent: #e05a3a;
+      --accent-hover: #c9472b; --nav-bg: #080808; --card-bg: #1c1c1c;
+      --shadow: rgba(0,0,0,0.4); --tag-bg: #2a2a2a;
+    }
+  </style>
+</head>
+
+<body id="body-root" class="font-sans transition-colors duration-300" style="background:var(--bg);color:var(--text)">
+
+<!-- TOAST -->
+<div id="toast"
+     class="fixed bottom-6 right-6 z-[999] flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium text-white shadow-2xl border-l-4"
+     style="background:#1a1a1a;border-color:var(--accent);transform:translateY(80px);opacity:0;transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1)">
+   <span id="toast-msg">Added to wishlist</span>
+</div>
+
+<!-- NAVBAR -->
+<nav class="sticky top-0 z-[100] border-b border-white/[0.06]" style="background:var(--nav-bg)">
+
+  <div class="max-w-[1280px] mx-auto flex items-center justify-between px-6 h-16">
+
+    <div class="font-display text-[1.6rem] tracking-tight text-[#f5f0ea]">
+      Shop<span style="color:var(--accent)">Vibe</span>
+    </div>
+
+    <!-- Desktop links -->
+    <div id="nav-links" class="hidden md:flex items-center gap-1">
+      <button class="nav-link px-3 py-[0.45rem] rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border-none cursor-pointer" data-section="home" style="background:var(--accent);color:#fff">Home</button>
+      <button class="nav-link px-3 py-[0.45rem] rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border-none cursor-pointer bg-transparent" data-section="shop">Shop</button>
+
+      <div class="relative">
+        <button id="dropdown-toggle" class="nav-link px-3 py-[0.45rem] rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border-none cursor-pointer bg-transparent" data-section="categories">Categories ▾</button>
+        <div id="dropdown-menu"
+             class="hidden absolute left-0 bg-[#222] border border-[#333] rounded-xl min-w-[180px] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
+             style="top:calc(100% + 8px)">
+          <div class="dropdown-item block px-4 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.06] hover:text-white cursor-pointer transition-all" data-cat="Electronics">📱 Electronics</div>
+          <div class="dropdown-item block px-4 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.06] hover:text-white cursor-pointer transition-all" data-cat="Fashion">👗 Fashion</div>
+          <div class="dropdown-item block px-4 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.06] hover:text-white cursor-pointer transition-all" data-cat="Home & Living">🏠 Home & Living</div>
+          <div class="dropdown-item block px-4 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.06] hover:text-white cursor-pointer transition-all" data-cat="Beauty">💄 Beauty</div>
+          <div class="dropdown-item block px-4 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.06] hover:text-white cursor-pointer transition-all" data-cat="Sports">⚽ Sports</div>
+        </div>
+      </div>
+
+      <button class="nav-link px-3 py-[0.45rem] rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border-none cursor-pointer bg-transparent" data-section="wishlist">Wishlist</button>
+      <button class="nav-link px-3 py-[0.45rem] rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.08] transition-all border-none cursor-pointer bg-transparent" data-section="about">About</button>
+    </div>
+
+    <!-- Desktop actions -->
+    <div class="hidden md:flex items-center gap-2">
+      <button id="theme-toggle"
+              class="bg-white/[0.07] border border-white/10 rounded-full px-[0.85rem] py-[0.4rem] text-xs font-semibold tracking-wider text-white/80 hover:bg-white/[0.13] hover:text-white cursor-pointer transition-all">
+         Light
+      </button>
+     
+
+    <!-- Hamburger -->
+    <button id="hamburger" class="md:hidden flex flex-col gap-[5px] cursor-pointer p-2 bg-transparent border-none" aria-label="Menu">
+      <span id="h1" class="block w-6 bg-white rounded-sm" style="height:2px;transition:all 0.3s"></span>
+      <span id="h2" class="block w-6 bg-white rounded-sm" style="height:2px;transition:all 0.3s"></span>
+      <span id="h3" class="block w-6 bg-white rounded-sm" style="height:2px;transition:all 0.3s"></span>
+    </button>
+  </div>
+
+  <!-- Mobile nav -->
+  <div id="mobile-nav" class="flex-col border-t border-[#222] px-4 py-3" style="background:#111;display:none">
+    <div class="mobile-nav-link px-3 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.07] hover:text-white cursor-pointer rounded-md transition-all" data-mobile="home" style="background:rgba(255,255,255,0.07);color:#fff">Home</div>
+    <div class="mobile-nav-link px-3 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.07] hover:text-white cursor-pointer rounded-md transition-all" data-mobile="shop">Shop</div>
+    <div class="mobile-nav-link px-3 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.07] hover:text-white cursor-pointer rounded-md transition-all" data-mobile="categories">Categories</div>
+    <div class="mobile-nav-link px-3 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.07] hover:text-white cursor-pointer rounded-md transition-all" data-mobile="wishlist">Wishlist</div>
+    <div class="mobile-nav-link px-3 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.07] hover:text-white cursor-pointer rounded-md transition-all" data-mobile="about">About</div>
+    <hr class="border-white/[0.08] my-2"/>
+    <div id="mobile-theme-toggle" class="px-3 py-[0.65rem] text-sm text-white/75 hover:bg-white/[0.07] hover:text-white cursor-pointer rounded-md transition-all">Toggle Theme</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="section-home"
+         class="relative flex items-center overflow-hidden"
+         style="min-height:380px;background:linear-gradient(135deg,#1a0a06 0%,#2d1810 40%,#1a0a06 100%)">
+  <div class="absolute inset-0 pointer-events-none"
+       style="background:radial-gradient(ellipse 60% 70% at 70% 50%,rgba(201,71,43,0.18) 0%,transparent 70%)"></div>
+
+  <div class="max-w-[1280px] mx-auto px-6 py-12 relative z-10 w-full">
+    <div class="inline-block text-[0.75rem] font-semibold tracking-[0.1em] px-[0.85rem] py-[0.35rem] rounded-full mb-5"
+         style="background:rgba(201,71,43,0.2);border:1px solid rgba(201,71,43,0.4);color:#e8856a">
+      NEW ARRIVALS 2025
+    </div>
+    <h1 class="font-display text-white leading-[1.1] mb-4" style="font-size:clamp(2.2rem,5vw,3.8rem)">
+      Shop the <em class="italic" style="color:#e8856a">Latest</em><br/>Trends Today
+    </h1>
+    <p id="hero-paragraph" class="text-white/60 text-[1.05rem] max-w-[480px] mb-8 leading-[1.65]" style="transition:opacity 0.3s">
+      Discover thousands of curated products across fashion, tech, beauty and more — all in one place.
+    </p>
+    <div class="flex flex-wrap gap-3">
+      <button id="hero-text-btn"
+              class="text-white border-none px-8 py-[0.85rem] rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-[1px] font-sans"
+              style="background:var(--accent)">
+         Change Message
+      </button>
+      <button onclick="scrollToSection('section-shop')"
+              class="px-8 py-[0.85rem] rounded-lg text-sm font-semibold cursor-pointer transition-all font-sans"
+              style="background:transparent;border:1.5px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7)">
+        Browse Shop 
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN -->
+<main>
+
+  <!-- Input & Display -->
+  <div class="max-w-[1280px] mx-auto px-6 pt-14">
+    <div class="rounded-2xl p-8 mb-10 border" style="background:var(--surface);border-color:var(--border)">
+      <h2 class="font-display text-[1.2rem] mb-1" style="color:var(--text)"> Personalise Your Experience</h2>
+      <p class="text-sm mb-5" style="color:var(--text-muted)">Enter your name to get a personalised welcome message.</p>
+      <div class="flex flex-wrap gap-3">
+        <input id="name-input" type="text" maxlength="50" placeholder="Enter your name..."
+               class="flex-1 min-w-[200px] px-4 py-3 rounded-lg text-sm outline-none border-[1.5px] font-sans transition-colors duration-200"
+               style="background:var(--bg);border-color:var(--border);color:var(--text)"
+               onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+        <button id="display-btn"
+                class="whitespace-nowrap px-6 py-3 rounded-lg text-sm font-semibold text-white border-none cursor-pointer font-sans transition-all hover:-translate-y-[1px]"
+                style="background:var(--accent)">Show Message</button>
+        <button id="clear-btn"
+                class="px-6 py-3 rounded-lg text-sm font-medium cursor-pointer font-sans transition-all border-[1.5px]"
+                style="background:transparent;border-color:var(--border);color:var(--text)"
+                onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">Clear</button>
+      </div>
+      <div id="display-output"
+           class="mt-4 px-4 py-[0.9rem] rounded-lg text-sm border-l-[3px]"
+           style="background:var(--tag-bg);border-color:var(--accent);color:var(--text);display:none">
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop section -->
+  <div class="max-w-[1280px] mx-auto px-6 pb-14" id="section-shop">
+
+    <!-- Wishlist -->
+    <div class="rounded-2xl p-6 mb-10 border" style="background:var(--surface);border-color:var(--border)">
+      <h3 class="font-display text-[1.1rem] mb-4 flex items-center gap-2" style="color:var(--text)">
+         My Wishlist
+        <span id="wishlist-count" class="text-[0.7rem] font-semibold text-white px-2 py-[0.15rem] rounded-full font-sans" style="background:var(--accent)">0</span>
+      </h3>
+
+      <!-- Search -->
+      <div class="relative mb-6">
+        <svg class="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none"
+             xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+             style="color:var(--text-muted)" viewBox="0 0 16 16">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+        </svg>
+        <input id="search-input" type="text" placeholder="Search wishlist items..."
+               class="w-full rounded-lg text-sm outline-none border-[1.5px] font-sans transition-colors duration-200"
+               style="padding:0.8rem 1rem 0.8rem 2.8rem;background:var(--bg);border-color:var(--border);color:var(--text)"
+               onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+      </div>
+
+      <p id="no-results" class="text-sm italic" style="color:var(--text-muted);display:none">No matching items found.</p>
+      <ul id="wishlist" class="flex flex-col gap-2 list-none" style="min-height:40px">
+        <li id="empty-msg" class="text-sm italic py-2" style="color:var(--text-muted)">
+          Your wishlist is empty — add items from the cards below!
+        </li>
+      </ul>
+    </div>
+
+    <!-- Selected items -->
+    <div id="selected-section"
+         class="rounded-2xl p-6 mb-10 border"
+         style="background:var(--surface);border-color:var(--border);display:none">
+      <h3 class="font-display text-[1.1rem] mb-4" style="color:var(--text)"> Selected Items</h3>
+      <div id="selected-list" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Cards header -->
+    <div class="flex items-baseline justify-between mb-8 flex-wrap gap-2">
+      <h2 class="font-display text-[1.75rem]" style="color:var(--text)">Featured Products</h2>
+      <span class="text-sm font-medium cursor-pointer" style="color:var(--accent)">View all →</span>
+    </div>
+
+    <!-- Cards grid -->
+    <div id="cards-grid" class="grid gap-5" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))"></div>
+
+  </div>
+</main>
+
+<hr style="border:none;border-top:1px solid var(--border)"/>
+
+<!-- FOOTER -->
+ </div>
+      <div>
+        <div class="text-[0.75rem] font-bold tracking-[0.1em] uppercase mb-4" style="color:rgba(255,255,255,0.4)">Company</div>
+     
+
+<script>
+const products = [
+  { id:1,  bg:'linear-gradient(135deg,#1a1a2e,#16213e)', category:'Electronics',   title:'Buy Smartphone', desc:'Next-gen performance with a 200MP camera and all-day battery life.', price:'$100', activity:'Buy Smartphone'   },
+
+  { id:2, bg:'linear-gradient(135deg,#0f3460,#533483)', category:'Fashion',        title:'Sneakers', desc:'Lightweight, breathable design for all-day comfort and street style.', price:'$129', activity:'Sneakers'     },
+
+  { id:3, bg:'linear-gradient(135deg,#2d1b69,#11998e)', category:'Electronics',   title:'Head phones and earburds',desc:'Active noise cancellation with 36-hour playback. Studio-quality sound.',     price:'$249', activity:'Head phones and earburds'},
+
+  { id:4,  bg:'linear-gradient(135deg,#4a2c17,#8b5e3c)', category:'Home & Living', title:'Kitchen utensils', desc:'App-controlled brewing with precision temperature and grind settings.',       price:'$179', activity:'Kitchen utensils'},
+];
+ 
+
+function renderCards() {
+  const grid = document.getElementById('cards-grid');
+  grid.innerHTML = '';
+  products.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'rounded-2xl overflow-hidden border transition-all duration-300 cursor-default';
+    card.style.cssText = `background:var(--card-bg);border-color:var(--border);box-shadow:0 2px 12px var(--shadow)`;
+    card.addEventListener('mouseenter', () => { card.style.transform='translateY(-4px)'; card.style.boxShadow='0 12px 32px var(--shadow)'; });
+    card.addEventListener('mouseleave', () => { card.style.transform=''; card.style.boxShadow='0 2px 12px var(--shadow)'; });
+    card.innerHTML = `
+      <div class="flex items-center justify-center text-[3.5rem] overflow-hidden" style="height:180px;background:${p.bg}">
+        <span style="filter:drop-shadow(0 4px 16px rgba(0,0,0,0.5))">${p.emoji}</span>
+      </div>
+      <div class="p-5">
+        <div class="text-[0.72rem] font-semibold tracking-[0.08em] uppercase mb-1" style="color:var(--accent)">${p.category}</div>
+        <div class="text-base font-semibold mb-1" style="color:var(--text)">${p.title}</div>
+        <div class="text-[0.825rem] leading-[1.55] mb-4" style="color:var(--text-muted)">${p.desc}</div>
+        <div class="flex items-center justify-between">
+          <span class="font-display text-[1.1rem] font-bold" style="color:var(--accent)">${p.price}</span>
+          <button class="card-btn px-4 py-2 rounded-md text-[0.8rem] font-semibold text-white border-none cursor-pointer transition-all hover:scale-[1.04] font-sans"
+                  style="background:var(--accent)"
+                  data-id="${p.id}" data-activity="${p.activity}" data-title="${p.title}">
+             add
+          </button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  document.querySelectorAll('.card-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      addToWishlist(this.dataset.activity);
+      addToSelected(this.dataset.title);
+     this.textContent = '✓ Added';
+this.style.background = '#2e7d32';
+this.disabled = true;
+
+showToast(`"${this.dataset.title}" added to wishlist!`);
+
+setTimeout(() => {
+  this.textContent = 'Add';
+  this.style.background = 'var(--accent)';
+  this.disabled = false;
+}, 3000);
+      this.style.display = 'none';
+
+setTimeout(() => {
+  this.style.display = 'block';
+}, 1000);
+    });
+  });
+}
+
+const wishlistItems = [];
+function addToWishlist(item) {
+  if (wishlistItems.includes(item)) return;
+  wishlistItems.push(item);
+  refreshWishlist();
+}
+function refreshWishlist(filter = '') {
+  const ul = document.getElementById('wishlist');
+  const noRes = document.getElementById('no-results');
+  const count = document.getElementById('wishlist-count');
+  ul.innerHTML = '';
+  if (!wishlistItems.length) {
+    ul.innerHTML = '<li id="empty-msg" class="text-sm italic py-2" style="color:var(--text-muted)">Your wishlist is empty — add items from the cards below!</li>';
+    noRes.style.display = 'none';
+    count.textContent = '0';
+    return;
+  }
+  const filtered = wishlistItems.filter(i => i.toLowerCase().includes(filter.toLowerCase()));
+  count.textContent = wishlistItems.length;
+  noRes.style.display = filtered.length ? 'none' : 'block';
+  filtered.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'flex items-center justify-between px-[0.9rem] py-[0.65rem] rounded-lg text-sm cursor-pointer transition-all';
+    li.style.cssText = 'background:var(--tag-bg);color:var(--text);animation:slideIn 0.25s ease';
+    li.innerHTML = `<span>${item}</span><span class="rx text-base transition-colors" style="color:var(--text-muted)" title="Remove">✕</span>`;
+    li.addEventListener('mouseenter', () => { li.style.background='rgba(201,71,43,0.08)'; li.querySelector('.rx').style.color='var(--accent)'; });
+    li.addEventListener('mouseleave', () => { li.style.background='var(--tag-bg)'; li.querySelector('.rx').style.color='var(--text-muted)'; });
+    li.addEventListener('click', () => {
+      wishlistItems.splice(wishlistItems.indexOf(item), 1);
+      refreshWishlist(document.getElementById('search-input').value);
+      showToast(`"${item}" removed from wishlist`);
+    });
+    ul.appendChild(li);
+  });
+}
+
+const selectedItems = new Set();
+function addToSelected(title) {
+  if (selectedItems.has(title)) return;
+  selectedItems.add(title);
+  const sec = document.getElementById('selected-section');
+  sec.style.display = 'block';
+  const tag = document.createElement('div');
+  tag.className = 'px-[0.9rem] py-[0.4rem] rounded-full text-[0.8rem] font-medium border';
+  tag.style.cssText = 'background:rgba(201,71,43,0.12);color:var(--accent);border-color:rgba(201,71,43,0.25);animation:popIn 0.2s ease';
+  tag.textContent = title;
+  document.getElementById('selected-list').appendChild(tag);
+}
+
+document.getElementById('search-input').addEventListener('input', function () { refreshWishlist(this.value); });
+
+document.getElementById('display-btn').addEventListener('click', () => {
+  const val = document.getElementById('name-input').value.trim();
+  const out = document.getElementById('display-output');
+  out.textContent = val ? ` Welcome to ShopVibe, ${val}! Explore our latest collections just for you.` : ' Please enter your name first.';
+  out.style.display = 'block';
+});
+document.getElementById('clear-btn').addEventListener('click', () => {
+  document.getElementById('name-input').value = '';
+  document.getElementById('display-output').style.display = 'none';
+  document.getElementById('display-output').textContent = '';
+});
+
+const heroMessages = [
+  'Discover thousands of curated products across fashion, tech, beauty and more — all in one place.',
+  'Flash Sale now live! Up to 60% off on top electronics and fashion brands. Shop before it ends.',
+  'Free shipping on all orders above $50. Fast delivery, hassle-free returns — always.',
+  'Members earn 2× points on every purchase this weekend. Join ShopVibe Plus today!',
+  "New arrivals drop every Friday. Be the first to grab the season's freshest picks.",
+];
+let heroIdx = 0;
+document.getElementById('hero-text-btn').addEventListener('click', () => {
+  heroIdx = (heroIdx + 1) % heroMessages.length;
+  const p = document.getElementById('hero-paragraph');
+  p.style.opacity = '0';
+  setTimeout(() => { p.textContent = heroMessages[heroIdx]; p.style.opacity = '1'; }, 150);
+});
+
+let isDark = false;
+function applyTheme() {
+  document.body.classList.toggle('dark-mode', isDark);
+  document.getElementById('theme-toggle').textContent = isDark ? ' Dark' : ' Light';
+  document.getElementById('mobile-theme-toggle').textContent = isDark ? ' Toggle Dark' : ' Toggle Light';
+}
+document.getElementById('theme-toggle').addEventListener('click', () => { isDark = !isDark; applyTheme(); });
+document.getElementById('mobile-theme-toggle').addEventListener('click', () => { isDark = !isDark; applyTheme(); });
+
+function setActiveNav(el) {
+  document.querySelectorAll('.nav-link').forEach(l => { l.style.background=''; l.style.color='rgba(255,255,255,0.7)'; });
+  el.style.background = 'var(--accent)'; el.style.color = '#fff';
+}
+document.querySelectorAll('.nav-link[data-section]').forEach(link => {
+  link.addEventListener('click', function () {
+    if (this.id === 'dropdown-toggle') return;
+    setActiveNav(this);
+    const s = this.dataset.section;
+    if (s === 'home')    window.scrollTo({ top:0, behavior:'smooth' });
+    if (s === 'shop')    scrollToSection('section-shop');
+    if (s === 'wishlist') scrollToSection('section-shop');
+    if (s === 'about')   scrollToSection('section-about');
+  });
+});
+
+const dropToggle = document.getElementById('dropdown-toggle');
+const dropMenu = document.getElementById('dropdown-menu');
+dropToggle.addEventListener('click', e => {
+  e.stopPropagation();
+  const isOpen = dropMenu.style.display === 'block';
+  dropMenu.style.display = isOpen ? 'none' : 'block';
+  setActiveNav(dropToggle);
+});
+document.addEventListener('click', () => { dropMenu.style.display = 'none'; });
+dropMenu.addEventListener('click', e => e.stopPropagation());
+document.querySelectorAll('.dropdown-item').forEach(item => {
+  item.addEventListener('click', function () {
+    dropMenu.style.display = 'none';
+    showToast(`Browsing: ${this.dataset.cat}`);
+    scrollToSection('section-shop');
+  });
+});
+
+const hamburger = document.getElementById('hamburger');
+const mobileNav = document.getElementById('mobile-nav');
+const h1=document.getElementById('h1'), h2=document.getElementById('h2'), h3=document.getElementById('h3');
+let menuOpen = false;
+hamburger.addEventListener('click', () => {
+  menuOpen = !menuOpen;
+  mobileNav.style.display = menuOpen ? 'flex' : 'none';
+  h1.style.transform = menuOpen ? 'translateY(7px) rotate(45deg)' : '';
+  h2.style.opacity   = menuOpen ? '0' : '1';
+  h3.style.transform = menuOpen ? 'translateY(-7px) rotate(-45deg)' : '';
+});
+document.querySelectorAll('.mobile-nav-link[data-mobile]').forEach(link => {
+  link.addEventListener('click', function () {
+    document.querySelectorAll('.mobile-nav-link').forEach(l => { l.style.background=''; l.style.color='rgba(255,255,255,0.75)'; });
+    this.style.background='rgba(255,255,255,0.07)'; this.style.color='#fff';
+    const s = this.dataset.mobile;
+    if (s==='home')  window.scrollTo({top:0,behavior:'smooth'});
+    if (s==='shop')  scrollToSection('section-shop');
+    if (s==='about') scrollToSection('section-about');
+    menuOpen=false; mobileNav.style.display='none';
+    h1.style.transform=''; h2.style.opacity='1'; h3.style.transform='';
+  });
+});
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.style.transform='translateY(0)'; t.style.opacity='1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.style.transform='translateY(80px)'; t.style.opacity='0'; }, 3000);
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* Add keyframe styles dynamically */
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes popIn   { from{opacity:0;transform:scale(0.85)}       to{opacity:1;transform:scale(1)} }
+`;
+document.head.appendChild(style);
+
+renderCards();
+</script>
+</body>
+</html>
